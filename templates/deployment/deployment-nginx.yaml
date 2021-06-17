@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-{{.Release.Name}}
+  namespace: web-{{.Release.Name}}
+spec:
+  replicas: {{ .Values.nginx.replicaCount }}
+  selector:
+    matchLabels:
+      app: nginx-{{.Release.Name}}
+  template:
+    metadata:
+      labels:
+        app: nginx-{{.Release.Name}}
+    spec:
+      containers:
+        - name: nginx-{{.Release.Name}}
+          image: {{ .Values.nginx.image }}
+          ports:
+            - containerPort: 80
+              name: http-nginx
+            - containerPort: 8080
+              name: status-nginx
+          # readinessProbe: # check that our containers are ready
+          #   httpGet: {path: /, port: 80}
+          #   initialDelaySeconds: 15
+          #   periodSeconds: 1
+          # livenessProbe: # check that our containers are alive
+          #   httpGet: {path: /, port: 80}
+          #   initialDelaySeconds: 15
+          #   periodSeconds: 1
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/nginx-status.conf
+              subPath: nginx.conf
+
+        - name: nginx-exporter
+          image: {{ .Values.nginxexporter.image }}
+          args:
+            - '-nginx.scrape-uri=http://nginx-{{.Release.Name}}:8080/nginx_status'
+          ports:
+            - name: nginx-ex-port
+              containerPort: 9113
+              protocol: TCP
+          imagePullPolicy: Always
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
