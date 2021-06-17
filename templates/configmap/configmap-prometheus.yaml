@@ -16,3 +16,4 @@ data:
         metrics_path: '/metrics'
         static_configs:
           - targets: ['nginx-{{.Release.Name}}.web-{{.Release.Name}}.svc.cluster.local:9113']
+ 
